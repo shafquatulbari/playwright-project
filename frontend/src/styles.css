@@ -1,0 +1,101 @@
+:root {
+  color-scheme: light dark;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: #0b0b0c;
+  color: #e8e8ea;
+}
+a {
+  color: inherit;
+}
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card {
+  background: #16171a;
+  border: 1px solid #2a2b2f;
+  border-radius: 10px;
+  padding: 16px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.column {
+  min-height: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.column h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  opacity: 0.9;
+}
+.item {
+  padding: 12px;
+  border-radius: 8px;
+  background: #22232a;
+  border: 1px solid #34363c;
+  cursor: grab;
+}
+.item:active {
+  cursor: grabbing;
+}
+.muted {
+  opacity: 0.7;
+  font-size: 12px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+}
+button,
+input,
+select {
+  background: #1b1c20;
+  color: #e8e8ea;
+  border: 1px solid #2a2b2f;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+button:hover {
+  background: #24252a;
+}
+input {
+  width: 100%;
+}
+.auth {
+  max-width: 420px;
+  margin: 60px auto;
+}
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.col {
+  border: 1px dashed #34363c;
+  padding: 8px;
+  border-radius: 10px;
+}
+.col.highlight {
+  background: #191a1f;
+}
+.title {
+  font-weight: 600;
+}
