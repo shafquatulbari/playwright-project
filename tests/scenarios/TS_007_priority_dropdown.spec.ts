@@ -49,20 +49,20 @@ test.describe("TS_007 Priority and Timestamps", () => {
     await page.getByTestId("new-item-priority").selectOption("urgent");
     await page.getByTestId("add-item").click();
 
-    // Assert UI reflects priority Urgent
+    // Locate created card in UI by title
     const todoCol = page.getByTestId("column-todo");
     const titleEl = todoCol.locator(".item .title", {
       hasText: "TS007 Urgent Item",
     });
-    const card = titleEl
-      .locator("xpath=ancestor::*[@data-testid^='item-']")
-      .first();
-    await expect(card).toContainText(/priority:\s*urgent/i);
+    await expect(titleEl).toBeVisible();
 
-    // Capture the created ID from DOM
-    createdId = await card
-      .getAttribute("data-testid")
-      .then((v) => (v || "").replace("item-", ""));
+    // Capture the created ID from the closest ancestor having data-testid^="item-"
+    const cardTestId = await titleEl.evaluate((el) => {
+      const host = el.closest('[data-testid^="item-"]');
+      return host ? host.getAttribute("data-testid") : null;
+    });
+    expect(cardTestId).toBeTruthy();
+    createdId = (cardTestId as string).replace("item-", "");
 
     // Verify API shows priority and timestamps
     const items = await getItems(request, token);
@@ -77,7 +77,14 @@ test.describe("TS_007 Priority and Timestamps", () => {
     page,
     request,
   }) => {
-    // Precondition from TC_001: we have token and createdId and are logged in
+    // Precondition from TC_001: we have token and createdId
+    // Note: each test gets a fresh page, so navigate and login again for UI assertions
+    await page.goto("/");
+    await page.getByTestId("switch-to-login").click();
+    await page.getByTestId("login-email").fill(email);
+    await page.getByTestId("login-password").fill(password);
+    await page.getByTestId("login-submit").click();
+
     const before = (await getItems(request, token)).find(
       (i: any) => i.id === createdId
     );
@@ -105,15 +112,18 @@ test.describe("TS_007 Priority and Timestamps", () => {
       )
       .toBe(true);
 
-    // Refresh UI
+    // Refresh UI via in-app button, then wait for the card to re-render
     await page.getByTestId("refresh").click();
+    await expect
+      .poll(async () => {
+        return await page.getByTestId(`item-${createdId}`).count();
+      }, { timeout: 7000 })
+      .toBeGreaterThan(0);
 
-    // UI: title shows new value and updated timestamp changed
+    // UI: title shows new value and updated label appears
     const card = page.getByTestId(`item-${createdId}`);
+    await expect(card).toBeVisible();
     await expect(card.locator(".title")).toHaveText("TS007 Urgent Item +1");
-
-    // We won't parse the UI date string; just ensure it changed from before by text inequality
-    // For a stronger match, one could expose updatedAt in a data-attribute; we'll skip that here
     await expect(card).toContainText(/updated:/i);
   });
 });

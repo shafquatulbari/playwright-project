@@ -148,3 +148,6 @@ playwright-report
 test-report
 .env.test
 .env.local
+
+# App runtime data (NeDB storage)
+backend/data/

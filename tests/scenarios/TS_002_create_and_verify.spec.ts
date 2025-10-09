@@ -110,13 +110,25 @@ test.describe("TS_002 Create Item and Verify in API", () => {
       return ids as string[];
     };
 
-    const uiTodoIds = await getUIIds("todo");
-    const uiDoingIds = await getUIIds("doing");
-    const uiDoneIds = await getUIIds("done");
-
-    expect(uiTodoIds.sort()).toEqual([...apiByColIds.todo].sort());
-    expect(uiDoingIds.sort()).toEqual([...apiByColIds.doing].sort());
-    expect(uiDoneIds.sort()).toEqual([...apiByColIds.done].sort());
+    // Wait until UI reflects API items after login (avoid race with initial fetch)
+    await expect
+      .poll(
+        async () => {
+          const uiTodoIds = await getUIIds("todo");
+          const uiDoingIds = await getUIIds("doing");
+          const uiDoneIds = await getUIIds("done");
+          return (
+            JSON.stringify(uiTodoIds.sort()) ===
+              JSON.stringify([...apiByColIds.todo].sort()) &&
+            JSON.stringify(uiDoingIds.sort()) ===
+              JSON.stringify([...apiByColIds.doing].sort()) &&
+            JSON.stringify(uiDoneIds.sort()) ===
+              JSON.stringify([...apiByColIds.done].sort())
+          );
+        },
+        { timeout: 7000 }
+      )
+      .toBe(true);
 
     // Verify the created item has non-null timestamps and priority in API
     const apiTodo = apiItems.filter((i: any) => i.column === "todo");

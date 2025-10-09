@@ -43,6 +43,10 @@ test.describe("TS_006 Reorder Items Within Column", () => {
     await page.getByTestId("login-submit").click();
 
     const col = page.getByTestId("column-todo");
+    // Wait until both items render in UI
+    await expect(page.getByTestId(`item-${a.id}`)).toBeVisible();
+    await expect(page.getByTestId(`item-${b.id}`)).toBeVisible();
+    await expect(page.getByTestId(`item-${c.id}`)).toBeVisible();
     const idsBefore = await col
       .locator("[data-testid^='item-']")
       .evaluateAll((els) =>
@@ -64,7 +68,7 @@ test.describe("TS_006 Reorder Items Within Column", () => {
         els.map((el) => el.getAttribute("data-testid")!.replace("item-", ""))
       );
 
-    // Build expected orderMap for API and verify it matches UI order after refresh
+    // Persist the UI order via API reorder, then verify both API and UI align
     const orderMap = { todo: idsAfterUI, doing: [], done: [] } as Record<
       string,
       string[]
@@ -77,5 +81,23 @@ test.describe("TS_006 Reorder Items Within Column", () => {
       .map((i: any) => i.id);
 
     expect(apiTodoIds).toEqual(idsAfterUI);
+
+    // Optionally hit Refresh and ensure UI order matches API
+    await page.getByTestId("refresh").click();
+    await expect
+      .poll(
+        async () => {
+          const idsUI = await col
+            .locator("[data-testid^='item-']")
+            .evaluateAll((els) =>
+              els.map((el) =>
+                el.getAttribute("data-testid")!.replace("item-", "")
+              )
+            );
+          return JSON.stringify(idsUI) === JSON.stringify(apiTodoIds);
+        },
+        { timeout: 5000 }
+      )
+      .toBe(true);
   });
 });
