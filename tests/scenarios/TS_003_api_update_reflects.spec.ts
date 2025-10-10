@@ -6,10 +6,8 @@ import {
   getItems,
   updateItem,
 } from "../helpers/api";
-
-function uniqueEmail(): string {
-  return `ts003+${Date.now()}@test.io`;
-}
+import dotenv from "dotenv";
+dotenv.config();
 
 // TS_003: API Update Reflects in UI
 // TS_003_TC_001: 1) PUT /api/items/:id to change title/priority 2) Click Refresh in UI
@@ -20,12 +18,11 @@ test.describe("TS_003 API Update Reflects in UI", () => {
     page,
     request,
   }) => {
-    const email = uniqueEmail();
-    const password = "Password123!";
-    const name = "TS003 User";
+    const email = process.env.email || "";
+    const password = process.env.password || "";
+    const name = process.env.name || "";
 
     // Register and login via API for token
-    await register(request, name, email, password);
     const auth = await login(request, email, password);
     const token = auth.token as string;
 
@@ -43,19 +40,21 @@ test.describe("TS_003 API Update Reflects in UI", () => {
     await page.getByTestId("login-password").fill(password);
     await page.getByTestId("login-submit").click();
 
+    // Verify successful login
+    await expect(page.getByText("Playwright Demo Board")).toBeVisible();
+    await expect(page.getByText(`Signed in as ${name}`)).toBeVisible();
+
     // Ensure the card is present in UI
     const itemCard = page.getByTestId(`item-${created.id}`);
     await expect(itemCard).toBeVisible();
     await expect(itemCard.locator(".title")).toHaveText("TS003 Item");
-    await expect(itemCard).toContainText(
-      /priority:\s*(low|normal|high|urgent)/i
-    );
+    await expect(itemCard).toContainText(/priority:\s*low/i);
 
     // Capture UI's current "updated:" text (to detect change later)
     const updatedEl = itemCard
       .locator(".muted", { hasText: "updated:" })
       .first();
-    const beforeUpdatedText = (await updatedEl.textContent()) || "";
+    console.log("updatedEl:", await updatedEl.textContent());
 
     // Capture API's updatedAt before update
     const apiBefore = await getItems(request, token);
@@ -65,8 +64,8 @@ test.describe("TS_003 API Update Reflects in UI", () => {
 
     // Perform API update: change title and priority
     await updateItem(request, token, created.id, {
-      title: "TS003 Item Updated",
-      priority: "urgent",
+      title: "TS003 Item Updated", // change title
+      priority: "urgent", // change priority
     });
 
     // Wait until API reflects an increased updatedAt

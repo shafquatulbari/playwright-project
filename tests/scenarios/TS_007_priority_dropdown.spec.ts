@@ -1,15 +1,7 @@
 import { test, expect } from "@playwright/test";
-import {
-  register,
-  login,
-  createItem,
-  getItems,
-  updateItem,
-} from "../helpers/api";
-
-function uniqueEmail(): string {
-  return `ts007+${Date.now()}@test.io`;
-}
+import { register, login, getItems, updateItem } from "../helpers/api";
+import dotenv from "dotenv";
+dotenv.config();
 
 // TS_007: Priority and Timestamps
 // TS_007_TC_001: Add item with priority=Urgent; UI shows Urgent; API priority='urgent' and timestamps non-null.
@@ -28,12 +20,11 @@ test.describe("TS_007 Priority and Timestamps", () => {
     page,
     request,
   }) => {
-    email = uniqueEmail();
-    password = "Password123!";
-    name = "TS007 User";
+    email = process.env.email || "";
+    password = process.env.password || "";
+    name = process.env.name || "";
 
-    // Register and login via API
-    await register(request, name, email, password);
+    // login via API
     const auth = await login(request, email, password);
     token = auth.token as string;
 
@@ -43,6 +34,10 @@ test.describe("TS_007 Priority and Timestamps", () => {
     await page.getByTestId("login-email").fill(email);
     await page.getByTestId("login-password").fill(password);
     await page.getByTestId("login-submit").click();
+
+    // Verify successful login
+    await expect(page.getByText("Playwright Demo Board")).toBeVisible();
+    await expect(page.getByText(`Signed in as ${name}`)).toBeVisible();
 
     // Create item via UI with priority Urgent
     await page.getByTestId("new-item-title").fill("TS007 Urgent Item");
@@ -85,6 +80,10 @@ test.describe("TS_007 Priority and Timestamps", () => {
     await page.getByTestId("login-password").fill(password);
     await page.getByTestId("login-submit").click();
 
+    // Verify successful login
+    await expect(page.getByText("Playwright Demo Board")).toBeVisible();
+    await expect(page.getByText(`Signed in as ${name}`)).toBeVisible();
+
     const before = (await getItems(request, token)).find(
       (i: any) => i.id === createdId
     );
@@ -115,9 +114,12 @@ test.describe("TS_007 Priority and Timestamps", () => {
     // Refresh UI via in-app button, then wait for the card to re-render
     await page.getByTestId("refresh").click();
     await expect
-      .poll(async () => {
-        return await page.getByTestId(`item-${createdId}`).count();
-      }, { timeout: 7000 })
+      .poll(
+        async () => {
+          return await page.getByTestId(`item-${createdId}`).count();
+        },
+        { timeout: 7000 }
+      )
       .toBeGreaterThan(0);
 
     // UI: title shows new value and updated label appears

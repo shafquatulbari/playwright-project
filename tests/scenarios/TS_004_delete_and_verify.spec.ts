@@ -1,9 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { register, login, createItem, getItems } from "../helpers/api";
-
-function uniqueEmail(): string {
-  return `ts004+${Date.now()}@test.io`;
-}
+import dotenv from "dotenv";
+dotenv.config();
 
 // TS_004: Delete Item and Verify in API
 // TS_004_TC_001: 1) Click Delete on the card
@@ -14,12 +12,11 @@ test.describe("TS_004 Delete Item and Verify in API", () => {
     page,
     request,
   }) => {
-    const email = uniqueEmail();
-    const password = "Password123!";
-    const name = "TS004 User";
+    const email = process.env.email || "";
+    const password = process.env.password || "";
+    const name = process.env.name || "";
 
-    // Setup: register, login and create an item via API
-    await register(request, name, email, password);
+    // Setup: login and create an item via API
     const auth = await login(request, email, password);
     const token = auth.token as string;
 
@@ -35,6 +32,10 @@ test.describe("TS_004 Delete Item and Verify in API", () => {
     await page.getByTestId("login-email").fill(email);
     await page.getByTestId("login-password").fill(password);
     await page.getByTestId("login-submit").click();
+
+    // Verify successful login
+    await expect(page.getByText("Playwright Demo Board")).toBeVisible();
+    await expect(page.getByText(`Signed in as ${name}`)).toBeVisible();
 
     // Verify card present; capture pre-delete UI count in Todo
     const todoCol = page.getByTestId("column-todo");

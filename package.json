@@ -12,7 +12,8 @@
     "test:headed": "playwright test --headed"
   },
   "devDependencies": {
-    "@playwright/test": "^1.48.0"
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^24.7.1"
   },
   "dependencies": {
     "dotenv": "^17.2.3"

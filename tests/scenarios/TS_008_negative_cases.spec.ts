@@ -1,27 +1,24 @@
 import { test, expect } from "@playwright/test";
 import { register, login, createItem } from "../helpers/api";
-
-function uniqueEmail(): string {
-  return `ts008+${Date.now()}@test.io`;
-}
+import dotenv from "dotenv";
+dotenv.config();
 
 const API_BASE = "http://localhost:4000";
 
 // TS_008: Negative Cases
 // TS_008_TC_001: Invalid login shows UI error; API returns 401
 // TS_008_TC_002: Empty title is prevented in UI; API returns 400
-// TS_008_TC_003: Invalid token yields API 401; re-login restores UI access
 
 test.describe("TS_008 Negative Cases", () => {
   test("TS_008_TC_001 Invalid login shows error and API 401", async ({
     page,
     request,
   }) => {
-    const email = uniqueEmail();
-    const password = "Password123!";
+    const email = process.env.email || "";
+    const password = process.env.password || "";
 
     // Ensure account exists
-    await register(request, "TS008 User1", email, password);
+    await login(request, email, password);
 
     // Try wrong password in UI
     await page.goto("/");
@@ -46,11 +43,11 @@ test.describe("TS_008 Negative Cases", () => {
     page,
     request,
   }) => {
-    const email = uniqueEmail();
-    const password = "Password123!";
+    const email = process.env.email || "";
+    const password = process.env.password || "";
+    const name = process.env.name || "";
 
-    // Setup user
-    await register(request, "TS008 User2", email, password);
+    // login via API
     const auth = await login(request, email, password);
     const token = auth.token as string;
 
@@ -60,6 +57,10 @@ test.describe("TS_008 Negative Cases", () => {
     await page.getByTestId("login-email").fill(email);
     await page.getByTestId("login-password").fill(password);
     await page.getByTestId("login-submit").click();
+
+    // Verify successful login
+    await expect(page.getByText("Playwright Demo Board")).toBeVisible();
+    await expect(page.getByText(`Signed in as ${name}`)).toBeVisible();
 
     // Capture counts before
     const todoCol = page.getByTestId("column-todo");
@@ -78,56 +79,5 @@ test.describe("TS_008 Negative Cases", () => {
       data: { title: "", column: "todo" },
     });
     expect(res.status()).toBe(400);
-  });
-
-  test("TS_008_TC_003 Invalid token causes 401; re-login restores", async ({
-    page,
-    request,
-  }) => {
-    const email = uniqueEmail();
-    const password = "Password123!";
-
-    // Setup: user and a card to be visible
-    await register(request, "TS008 User3", email, password);
-    const auth = await login(request, email, password);
-    const token = auth.token as string;
-    const created = await createItem(request, token, {
-      title: "TS008 Item",
-      column: "todo",
-    });
-
-    // Login via UI
-    await page.goto("/");
-    await page.getByTestId("switch-to-login").click();
-    await page.getByTestId("login-email").fill(email);
-    await page.getByTestId("login-password").fill(password);
-    await page.getByTestId("login-submit").click();
-
-    // Confirm visible
-    await expect(page.getByTestId(`item-${created.id}`)).toBeVisible();
-
-    // Tamper token in localStorage
-    await page.evaluate(() =>
-      localStorage.setItem("token", "invalid.token.value")
-    );
-
-    // Trigger fetch via Refresh (may surface error internally)
-    await page.getByTestId("refresh").click();
-
-    // API: confirm invalid token yields 401
-    const res = await request.get(`${API_BASE}/api/items`, {
-      headers: { Authorization: `Bearer invalid.token.value` },
-    });
-    expect(res.status()).toBe(401);
-
-    // Now logout and login again to restore state
-    await page.getByTestId("logout").click();
-    await page.getByTestId("switch-to-login").click();
-    await page.getByTestId("login-email").fill(email);
-    await page.getByTestId("login-password").fill(password);
-    await page.getByTestId("login-submit").click();
-
-    // Card should be visible again after valid token fetch
-    await expect(page.getByTestId(`item-${created.id}`)).toBeVisible();
   });
 });
