@@ -1,0 +1,19 @@
+{
+  "name": "visual-report-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "build:frontend": "cd frontend && npm run build",
+    "install:frontend": "cd frontend && npm install"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "pixelmatch": "^6.0.0",
+    "pngjs": "^7.0.0",
+    "sharp": "^0.33.0"
+  }
+}

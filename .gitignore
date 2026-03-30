@@ -151,3 +151,8 @@ test-report
 
 # App runtime data (NeDB storage)
 backend/data/
+
+# Visual testing results (regenerated each run)
+visual-results/
+visual-report-server/settings.json
+visual-report-server/frontend/dist/

@@ -3,19 +3,28 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "install:all": "npm --prefix backend install && npm --prefix frontend install && cd visual-report-server && npm install && cd frontend && npm install",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "test:e2e": "playwright test",
     "test:ui": "playwright test --ui",
     "test": "playwright test --ui --headed",
-    "test:headed": "playwright test --headed"
+    "test:headed": "playwright test --headed",
+    "test:visual": "npx playwright test --config playwright.visual.config.ts",
+    "test:visual:update": "VISUAL_UPDATE_BASELINES=true npx playwright test --config playwright.visual.config.ts",
+    "test:visual:report": "node visual-report-server/lib/report-generator.js",
+    "dashboard": "cd visual-report-server/frontend && npm run build && cd ../.. && node visual-report-server/server.js",
+    "dashboard:dev": "node visual-report-server/server.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",
     "@types/node": "^24.7.1"
   },
   "dependencies": {
-    "dotenv": "^17.2.3"
+    "@anthropic-ai/sdk": "^0.80.0",
+    "dotenv": "^17.2.3",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0",
+    "sharp": "^0.34.5"
   }
 }
